@@ -6,44 +6,34 @@
 import os
 from dotenv import load_dotenv
 from discord.ext import commands
-import asyncpraw
+from lib.reddit import get_random_image
 
 
 # Loads .env file for API keys
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-CLIENT_ID = os.getenv('CLIENT_ID')
-CLIENT_SECRET = os.getenv('CLIENT_SECRET')
-USER_AGENT = os.getenv('USER_AGENT')
-
 
 # Creates bot instance
 bot = commands.Bot(command_prefix='!')
 
-
-# Initialization Event
+# Event when connection is completed
 @bot.event
 async def on_ready():
     print(f'{bot.user.name} has connected to Discord!')
 
-
-# Chat command for showing a random dog from Reddit
-reddit = asyncpraw.Reddit(client_id=CLIENT_ID,
-                     client_secret=CLIENT_SECRET,
-                     user_agent=USER_AGENT)
-
-# Discord call which posts a random submission
+# Discord call which posts a random submission of dog
 @bot.command(name="dog", help="Displays a good boy (or girl)")
 async def dog(ctx):
-    # Loops through random submissions until a jpg is found
-    is_image = False
-    while not (is_image):
-        subreddit = await reddit.subreddit('rarepuppers')
-        submission = await subreddit.random()
-        is_image = submission.url.endswith(".jpg")
+    image_link = await get_random_image("rarepuppers")
+    await ctx.send(image_link)
 
-    await ctx.send(submission.url)
-
+# Command which grabs a random image from the subreddit supplied
+# Usage: !random <subreddit>
+# Example: !random memes
+@bot.command(name="random", help="Displays a random image from the given subreddit.")
+async def dog(ctx, arg):
+    image_link = await get_random_image(arg)
+    await ctx.send(image_link)
 
 # Execute bot
 bot.run(TOKEN)
